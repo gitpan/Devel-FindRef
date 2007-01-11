@@ -1,0 +1,7 @@
+Revision history for Perl extension Devel::FindRef
+
+0.1  Fri Jan 12 00:06:57 CET 2007
+	- initial release.
+
+0.0  Thu Jan 11 14:21:47 CET 2007
+	- copied from Convert-Scalar.

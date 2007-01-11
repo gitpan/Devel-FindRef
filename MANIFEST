@@ -1,0 +1,9 @@
+COPYING
+Changes
+Makefile.PL
+MANIFEST
+README
+FindRef.xs
+FindRef.pm
+t/00_load.t
+META.yml                                 Module meta-data (added by MakeMaker)
