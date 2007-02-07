@@ -1,5 +1,8 @@
 Revision history for Perl extension Devel::FindRef
 
+0.2  Wed Feb  7 22:31:58 CET 2007
+	- "backport" to 5.8.8.
+
 0.1  Fri Jan 12 00:06:57 CET 2007
 	- initial release.
 

@@ -2,6 +2,16 @@
 #include "perl.h"
 #include "XSUB.h"
 
+#define PERL_VERSION_ATLEAST(a,b,c)                             \
+  (PERL_REVISION > (a)                                          \
+   || (PERL_REVISION == (a)                                     \
+       && (PERL_VERSION > (b)                                   \
+           || (PERL_VERSION == (b) && PERLSUBVERSION >= (c)))))
+
+#if !PERL_VERSION_ATLEAST (5,8,9)
+# define SVt_LAST 16
+#endif
+
 #define res_pair(text)					\
   {							\
     AV *av = newAV ();					\

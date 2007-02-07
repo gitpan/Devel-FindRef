@@ -6,7 +6,7 @@ use XSLoader;
 
 
 BEGIN {
-   our $VERSION = '0.1';
+   our $VERSION = '0.2';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -21,10 +21,11 @@ Devel::FindRef - where is that reference to my scalar hiding?
 =head1 DESCRIPTION
 
 Tracking down reference problems (e.g. you expect some object to be
-destroyed, but there are still references to it that keep it alive). can
-be very hard, although perl keeps track of all values.
+destroyed, but there are still references to it that keep it alive) can be
+very hard. Fortunately, perl keeps track of all its values, so tracking
+references "backwards" is usually possible.
 
-The C<track> function can hlep track down some of those refernces back to
+The C<track> function can help track down some of those references back to
 the variables containing them.
 
 For example, for this fragment:
@@ -43,8 +44,8 @@ For example, for this fragment:
                                    
    testsub;                        
 
-The output is as follows (or similar to htis, in case I forget to update
-the manpage afetr some changes):
+The output is as follows (or similar to this, in case I forget to update
+the manpage after some changes):
 
    SCALAR(0x676fa0) is
       referenced by REF(0x676fb0), which is
@@ -63,8 +64,8 @@ the manpage afetr some changes):
                in the global $Test::hash2.
 
 
-It is a bit convoluted to read, but basically it says that the value stored in C<$var>
-can be found:
+It is a bit convoluted to read, but basically it says that the value
+stored in C<$var> can be found:
 
 =over 4
 
@@ -167,6 +168,8 @@ Marc Lehmann <pcg@goof.com>.
 =head1 BUGS
 
 Only code values, arrays, hashes, scalars and magic are being looked at.
+
+This is a quick hack only.
 
 =head1 COPYRIGHT AND LICENSE
 
