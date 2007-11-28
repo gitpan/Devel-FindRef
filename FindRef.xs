@@ -146,7 +146,7 @@ find_ (SV *target)
                   }
 
                 if (rmagical)
-                  SvRMAGICAL_off (sv);
+                  SvRMAGICAL_on (sv);
               }
           }
 

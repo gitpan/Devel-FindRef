@@ -61,46 +61,47 @@ DESCRIPTION
     $Test::hash2.
 
 EXPORTS
-        None.
+    None.
 
 FUNCTIONS
-        $string = Devel::FindRef::track $ref[, $depth]
-            Track the perl value pointed to by $ref up to a depth of $depth
-            and return a descriptive string. $ref can point at any perl
-            value, be it anonymous sub, hash, array, scalar etc.
+    $string = Devel::FindRef::track $ref[, $depth]
+        Track the perl value pointed to by $ref up to a depth of $depth and
+        return a descriptive string. $ref can point at any perl value, be it
+        anonymous sub, hash, array, scalar etc.
 
-            This is the function you most often use.
+        This is the function you most often use.
 
-        @references = Devel::FindRef::find $ref
-            Return arrayrefs that contain [$message, $ref] pairs. The
-            message describes what kind of reference was found and the $ref
-            is the reference itself, which cna be omitted if "find" decided
-            to end the search.
+    @references = Devel::FindRef::find $ref
+        Return arrayrefs that contain [$message, $ref] pairs. The message
+        describes what kind of reference was found and the $ref is the
+        reference itself, which cna be omitted if "find" decided to end the
+        search.
 
-            The "track" function uses this to find references to the value
-            you are interested in and recurses on the returned references.
+        The "track" function uses this to find references to the value you
+        are interested in and recurses on the returned references.
 
-        $ref = Devel::FindRef::ref2ptr $ptr
-            Sometimes you know (from debugging output) the address of a perl
-            scalar you are interested in. This function can be used to turn
-            the address into a reference to that scalar. It is quite safe to
-            call on valid addresses, but extremely dangerous to call on
-            invalid ones.
+    $ref = Devel::FindRef::ptr2ref $integer
+        Sometimes you know (from debugging output) the address of a perl
+        scalar you are interested in (e.g. "HASH(0x176ff70)"). This function
+        can be used to turn the address into a reference to that scalar. It
+        is quite safe to call on valid addresses, but extremely dangerous to
+        call on invalid ones.
+
+           # we know that HASH(0x176ff70) exists, so turn it into a hashref:
+           my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
 
 AUTHOR
-        Marc Lehmann <pcg@goof.com>.
+    Marc Lehmann <pcg@goof.com>.
 
 BUGS
-        Only code values, arrays, hashes, scalars and magic are being looked
-        at.
+    Only code values, arrays, hashes, scalars and magic are being looked at.
 
-        This is a quick hack only.
+    This is a quick hack only.
 
 COPYRIGHT AND LICENSE
-        Copyright (C) 2007 by Marc Lehmann.
+    Copyright (C) 2007 by Marc Lehmann.
 
-        This library is free software; you can redistribute it and/or modify
-        it under the same terms as Perl itself, either Perl version 5.8.8
-        or, at your option, any later version of Perl 5 you may have
-        available.
+    This library is free software; you can redistribute it and/or modify it
+    under the same terms as Perl itself, either Perl version 5.8.8 or, at
+    your option, any later version of Perl 5 you may have available.
 

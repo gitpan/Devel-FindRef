@@ -1,5 +1,8 @@
 Revision history for Perl extension Devel::FindRef
 
+1.0  Wed Nov 28 13:19:45 CET 2007
+	- correctly restore RMAGICAL flag (Ruslan Zakirov).
+
 0.2  Wed Feb  7 22:31:58 CET 2007
 	- "backport" to 5.8.8.
 

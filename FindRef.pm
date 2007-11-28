@@ -4,9 +4,8 @@ use strict;
 
 use XSLoader;
 
-
 BEGIN {
-   our $VERSION = '0.2';
+   our $VERSION = '1.0';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -80,6 +79,8 @@ idea why, hints accepted).
 C<$local> in the sub C<Test::testsub> and also in the hash referenced by
 C<$Test::hash2>.
 
+=back
+
 =head1 EXPORTS
 
 None.
@@ -102,14 +103,19 @@ sub find($);
 
 sub track {
    my $buf = "";
+   my %ignore;
 
    my $track; $track = sub {
-      my (undef, $depth, $indent) = @_;
+      my ($target, $depth, $indent) = @_;
+      @_ = ();
+      local $ignore{$target+0} = undef;
 
       if ($depth) {
-         my (@about) = find $_[0];
+         my (@about) = grep !exists $ignore{$_->[1]}, find $target;
          if (@about) {
+            local @ignore{map $_->[1]+0, @about} = ();
             for my $about (@about) {
+               local $ignore{$about+0} = undef;
                $buf .= ("   ") x $indent;
                $buf .= $about->[0];
                if (@$about > 1) {
@@ -148,16 +154,19 @@ interested in and recurses on the returned references.
 
 sub find($) {
    my ($about, $excl) = &find_;
-   my %excl = map +($_ => 1), @$excl;
-   grep !$excl{$_->[1] + 0}, @$about
+   my %excl = map +($_ => undef), @$excl;
+   grep !exists $excl{$_->[1] + 0}, @$about
 }
 
-=item $ref = Devel::FindRef::ref2ptr $ptr
+=item $ref = Devel::FindRef::ptr2ref $integer
 
 Sometimes you know (from debugging output) the address of a perl scalar
-you are interested in. This function can be used to turn the address into
-a reference to that scalar. It is quite safe to call on valid addresses,
-but extremely dangerous to call on invalid ones.
+you are interested in (e.g. C<HASH(0x176ff70)>). This function can be used
+to turn the address into a reference to that scalar. It is quite safe to
+call on valid addresses, but extremely dangerous to call on invalid ones.
+
+   # we know that HASH(0x176ff70) exists, so turn it into a hashref:
+   my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
 
 =back
 
