@@ -74,8 +74,8 @@ FUNCTIONS
     @references = Devel::FindRef::find $ref
         Return arrayrefs that contain [$message, $ref] pairs. The message
         describes what kind of reference was found and the $ref is the
-        reference itself, which cna be omitted if "find" decided to end the
-        search.
+        reference itself, which can be omitted if "find" decided to end the
+        search. The returned references are all weak references.
 
         The "track" function uses this to find references to the value you
         are interested in and recurses on the returned references.

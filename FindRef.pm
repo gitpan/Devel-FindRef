@@ -3,9 +3,10 @@ package Devel::FindRef;
 use strict;
 
 use XSLoader;
+use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.0';
+   our $VERSION = '1.1';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -102,25 +103,25 @@ This is the function you most often use.
 sub find($);
 
 sub track {
+   my ($ref, $depth) = @_;
+   @_ = ();
+
    my $buf = "";
-   my %ignore;
+
+   Scalar::Util::weaken $ref;
 
    my $track; $track = sub {
-      my ($target, $depth, $indent) = @_;
-      @_ = ();
-      local $ignore{$target+0} = undef;
+      my ($refref, $depth, $indent) = @_;
 
       if ($depth) {
-         my (@about) = grep !exists $ignore{$_->[1]}, find $target;
+         my (@about) = find $$refref;
          if (@about) {
-            local @ignore{map $_->[1]+0, @about} = ();
             for my $about (@about) {
-               local $ignore{$about+0} = undef;
                $buf .= ("   ") x $indent;
                $buf .= $about->[0];
                if (@$about > 1) {
                   $buf .= " $about->[1], which is\n";
-                  $track->($about->[1], $depth - 1, $indent + 1);
+                  $track->(\$about->[1], $depth - 1, $indent + 1);
                } else {
                   $buf .= ".\n";
                }
@@ -135,8 +136,8 @@ sub track {
       }
    };
 
-   $buf .= "$_[0] is\n";
-   $track->($_[0], $_[1] || 10, 1);
+   $buf .= "$ref is\n";
+   $track->(\$ref, $depth || 10, 1);
    $buf
 }
 
@@ -144,8 +145,8 @@ sub track {
 
 Return arrayrefs that contain [$message, $ref] pairs. The message
 describes what kind of reference was found and the C<$ref> is the
-reference itself, which cna be omitted if C<find> decided to end the
-search.
+reference itself, which can be omitted if C<find> decided to end the
+search. The returned references are all weak references.
 
 The C<track> function uses this to find references to the value you are
 interested in and recurses on the returned references.

@@ -1,5 +1,11 @@
 Revision history for Perl extension Devel::FindRef
 
+1.1  Sat Dec 29 22:04:14 CET 2007
+	- ignore weak references.
+        - weaken internal references, to avoid displaying
+          them and drowning important output.
+        - properly find magical references.
+
 1.0  Wed Nov 28 13:19:45 CET 2007
 	- correctly restore RMAGICAL flag (Ruslan Zakirov).
 
