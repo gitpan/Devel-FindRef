@@ -16,37 +16,40 @@ DESCRIPTION
     For example, for this fragment:
 
        package Test;           
-                         
-       our $var = "hi\n";
+                             
+   our $var = "hi\n";
        my $x = \$var;      
        our %hash = (ukukey => \$var);
        our $hash2 = {ukukey2 => \$var};
-                           
-       sub testsub {             
+                               
+   sub testsub {             
           my $local = $hash2;      
           print Devel::FindRef::track \$var;
        }                             
-                                   
-       testsub;                        
+                                       
+   testsub;
 
     The output is as follows (or similar to this, in case I forget to update
     the manpage after some changes):
 
-       SCALAR(0x676fa0) is
-          referenced by REF(0x676fb0), which is
-             in the lexical '$x' in CODE(0x676370), which is
-                not found anywhere I looked :(
-          referenced by REF(0x676360), which is
-             in the member 'ukukey' of HASH(0x756660), which is
-                in the global %Test::hash.
+       SCALAR(0x7bd2d0) is
           in the global $Test::var.
-          referenced by REF(0x6760e0), which is
-             in the member 'ukukey2' of HASH(0x676f30), which is
-                referenced by REF(0x77bcf0), which is
-                   in the lexical '$local' in CODE(0x77bcb0), which is
+          referenced by REF(0x7bd240), which is
+             in the member 'ukukey2' of HASH(0x7bd228), which is
+                referenced by REF(0x81dae8), which is
+                   in the lexical '$local' in CODE(0x81da88), which is
                       in the global &Test::testsub.
-                referenced by REF(0x77bc80), which is
+                referenced by REF(0x81da40), which is
                    in the global $Test::hash2.
+          referenced by REF(0x79f3f8), which is
+             in the lexical '$x' in CODE(0x79f518), which is
+                the containing scope for CODE(0x81da88), which is
+                   in the global &Test::testsub.
+          referenced by REF(0x79f2f0), which is
+             not found anywhere I looked :(
+          referenced by REF(0x79f140), which is
+             in the member 'ukukey' of HASH(0x81d698), which is
+                in the global %Test::hash.
 
     It is a bit convoluted to read, but basically it says that the value
     stored in $var can be found:

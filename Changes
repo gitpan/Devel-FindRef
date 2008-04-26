@@ -1,5 +1,9 @@
 Revision history for Perl extension Devel::FindRef
 
+1.2  Sat Apr 26 05:14:58 CEST 2008
+	- apply lots of fixes by Chris Heath.
+        - redo example in manpage, it's complete now.
+
 1.1  Sat Dec 29 22:04:14 CET 2007
 	- ignore weak references.
         - weaken internal references, to avoid displaying

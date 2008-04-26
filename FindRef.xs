@@ -16,7 +16,9 @@
   {								\
     AV *av = newAV ();						\
     av_push (av, newSVpv (text, 0));				\
+    if (rmagical) SvRMAGICAL_on (sv);				\
     av_push (av, sv_rvweaken (newRV_inc (sv)));			\
+    if (rmagical) SvRMAGICAL_off (sv);				\
     av_push (about, newRV_noinc ((SV *)av));			\
   }
 
@@ -119,6 +121,9 @@ find_ (SV *target)
                         {
                           int depth = CvDEPTH (sv);
 
+                          if (!depth && CvPADLIST(sv))
+                            depth = 1;
+
                           if (depth)
                             {
                               AV *padlist = CvPADLIST (sv);
@@ -129,13 +134,16 @@ find_ (SV *target)
 
                                   av_push (excl, newSVuv (PTR2UV (pad))); /* exclude pads themselves from being found */
 
-                                  for (i = AvFILLp (pad); i--; )
+                                  for (i = AvFILLp (pad) + 1; i--; )
                                     if (AvARRAY (pad)[i] == targ)
                                       res_pair (form ("in the lexical '%s' in", SvPVX (AvARRAY (AvARRAY (padlist)[0])[i])));
 
                                   --depth;
                                 }
                             }
+
+                          if ((SV*)CvOUTSIDE(sv) == targ)
+                            res_pair ("the containing scope for");
                         }
 
                         break;
