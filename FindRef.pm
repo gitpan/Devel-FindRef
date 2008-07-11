@@ -6,13 +6,13 @@ use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.2';
+   our $VERSION = '1.3';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
 =head1 NAME
 
-Devel::FindRef - where is that reference to my scalar hiding?
+Devel::FindRef - where is that reference to my variable hiding?
 
 =head1 SYNOPSIS
 
@@ -47,24 +47,23 @@ For example, for this fragment:
 The output is as follows (or similar to this, in case I forget to update
 the manpage after some changes):
 
-   SCALAR(0x7bd2d0) is
-      in the global $Test::var.
-      referenced by REF(0x7bd240), which is
-         in the member 'ukukey2' of HASH(0x7bd228), which is
-            referenced by REF(0x81dae8), which is
-               in the lexical '$local' in CODE(0x81da88), which is
-                  in the global &Test::testsub.
-            referenced by REF(0x81da40), which is
+   SCALAR(0x814ece8) is
+   +- in the global $Test::var.
+   +- referenced by REF(0x814f9e4), which is
+   |     in the lexical '$x' in CODE(0x814ed78), which is
+   |        the containing scope for CODE(0x820c4b0), which is
+   |           in the global &Test::testsub.
+   +- referenced by REF(0x814ed6c), which is
+   |     in the member 'ukukey' of HASH(0x81da20c), which is
+   |        in the global %Test::hash.
+   +- referenced by REF(0x814ec28), which is
+   |     not found anywhere I looked :(
+   +- referenced by REF(0x814eb44), which is
+         in the member 'ukukey2' of HASH(0x814f99c), which is
+         +- referenced by REF(0x820c450), which is
+         |     in the lexical '$local' in CODE(0x820c4b0), which was seen before.
+         +- referenced by REF(0x820c204), which is
                in the global $Test::hash2.
-      referenced by REF(0x79f3f8), which is
-         in the lexical '$x' in CODE(0x79f518), which is
-            the containing scope for CODE(0x81da88), which is
-               in the global &Test::testsub.
-      referenced by REF(0x79f2f0), which is
-         not found anywhere I looked :(
-      referenced by REF(0x79f140), which is
-         in the member 'ukukey' of HASH(0x81d698), which is
-            in the global %Test::hash.
 
 It is a bit convoluted to read, but basically it says that the value
 stored in C<$var> can be found:
@@ -109,6 +108,7 @@ sub track {
    @_ = ();
 
    my $buf = "";
+   my %seen;
 
    Scalar::Util::weaken $ref;
 
@@ -119,27 +119,28 @@ sub track {
          my (@about) = find $$refref;
          if (@about) {
             for my $about (@about) {
-               $buf .= ("   ") x $indent;
-               $buf .= $about->[0];
+               $buf .= "$indent" . (@about > 1 ? "+- " : "   ") . $about->[0];
                if (@$about > 1) {
-                  $buf .= " $about->[1], which is\n";
-                  $track->(\$about->[1], $depth - 1, $indent + 1);
+                  if ($seen{$about->[1]+0}++) {
+                     $buf .= " $about->[1], which was seen before.\n";
+                  } else {
+                     $buf .= " $about->[1], which is\n";
+                     $track->(\$about->[1], $depth - 1, $about == $about[-1] ? "$indent   " : "$indent|  ");
+                  }
                } else {
                   $buf .= ".\n";
                }
             }
          } else {
-            $buf .= ("   ") x $indent;
-            $buf .= "not found anywhere I looked :(\n";
+            $buf .= "$indent   not found anywhere I looked :(\n";
          }
       } else {
-         $buf .= ("   ") x $indent;
-         $buf .= "not referenced within the search depth.\n";
+         $buf .= "$indent   not referenced within the search depth.\n";
       }
    };
 
    $buf .= "$ref is\n";
-   $track->(\$ref, $depth || 10, 1);
+   $track->(\$ref, $depth || $ENV{PERL_DEVEL_FINDREF_DEPTH} || 10, "");
    $buf
 }
 
@@ -172,6 +173,12 @@ call on valid addresses, but extremely dangerous to call on invalid ones.
    my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
 
 =back
+
+=head1 ENVIRONMENT VARIABLES
+
+You can set the environment variable C<PERL_DEVEL_FINDREF_DEPTH> to an
+integer to override the default depth in C<track>. If a call explicitly
+specified a depth it is not overridden.
 
 =head1 AUTHOR
 

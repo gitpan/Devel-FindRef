@@ -12,25 +12,32 @@
 # define SVt_LAST 16
 #endif
 
+#if !PERL_VERSION_ATLEAST (5,10,0)
+# define SvPAD_OUR(dummy) 0
+#endif
+
 #define res_pair(text)						\
-  {								\
+  do {								\
     AV *av = newAV ();						\
     av_push (av, newSVpv (text, 0));				\
     if (rmagical) SvRMAGICAL_on (sv);				\
     av_push (av, sv_rvweaken (newRV_inc (sv)));			\
     if (rmagical) SvRMAGICAL_off (sv);				\
     av_push (about, newRV_noinc ((SV *)av));			\
-  }
+  } while (0)
+
+#define res_text(text)						\
+  do {								\
+    AV *av = newAV ();						\
+    av_push (av, newSVpv (text, 0));				\
+    av_push (about, newRV_noinc ((SV *)av));			\
+  } while (0)
 
 #define res_gv(sigil)						\
-  {								\
-    AV *av = newAV ();						\
-    av_push (av, newSVpv (form ("in the global %c%s::%.*s", sigil, \
-                                HvNAME (GvSTASH (sv)),		\
-                                GvNAMELEN (sv), GvNAME (sv) ? GvNAME (sv) : "<anonymous>"), \
-                          0));					\
-    av_push (about, newRV_noinc ((SV *)av));			\
-  }
+  res_text (form ("in the global %c%s::%.*s", sigil,		\
+                  HvNAME (GvSTASH (sv)),			\
+                  GvNAMELEN (sv),				\
+                  GvNAME (sv) ? GvNAME (sv) : "<anonymous>"))
 
 MODULE = Devel::FindRef		PACKAGE = Devel::FindRef		
 
@@ -48,7 +55,8 @@ find_ (SV *target)
 	PPCODE:
 {
   	SV *arena, *targ;
-        int rmagical, i;
+        U32 rmagical;
+        int i;
         AV *about = newAV ();
         AV *excl  = newAV ();
 
@@ -76,16 +84,26 @@ find_ (SV *target)
 
                 if (SvTYPE (sv) >= SVt_PVMG)
                   {
-                    MAGIC *mg = SvMAGIC (sv);
-                    while (mg)
+                    if (SvTYPE (sv) == SVt_PVMG && SvPAD_OUR (sv))
                       {
-                        if (mg->mg_obj == targ)
-                          res_pair (form ("referenced (in mg_obj) by '%c' type magic attached to", mg->mg_type));
+                        /* I have no clue what this is */
+                        /* maybe some placeholder for our variables for eval? */
+                        /* it doesn't seem to reference anything, so we should be able to ignore it */
+                      }
+                    else
+                      {
+                        MAGIC *mg = SvMAGIC (sv);
 
-                        if ((SV *)mg->mg_ptr == targ && mg->mg_flags & MGf_REFCOUNTED)
-                          res_pair (form ("referenced (in mg_ptr) by '%c' type magic attached to", mg->mg_type));
+                        while (mg)
+                          {
+                            if (mg->mg_obj == targ)
+                              res_pair (form ("referenced (in mg_obj) by '%c' type magic attached to", mg->mg_type));
 
-                        mg = mg->mg_moremagic;
+                            if ((SV *)mg->mg_ptr == targ && mg->mg_flags & MGf_REFCOUNTED)
+                              res_pair (form ("referenced (in mg_ptr) by '%c' type magic attached to", mg->mg_type));
+
+                            mg = mg->mg_moremagic;
+                          }
                       }
                   }
 
@@ -121,7 +139,8 @@ find_ (SV *target)
                         {
                           int depth = CvDEPTH (sv);
 
-                          if (!depth && CvPADLIST(sv))
+                          /* Anonymous subs have a padlist but zero depth */
+                          if (CvANON (sv) && !depth && CvPADLIST (sv))
                             depth = 1;
 
                           if (depth)
@@ -136,14 +155,36 @@ find_ (SV *target)
 
                                   for (i = AvFILLp (pad) + 1; i--; )
                                     if (AvARRAY (pad)[i] == targ)
-                                      res_pair (form ("in the lexical '%s' in", SvPVX (AvARRAY (AvARRAY (padlist)[0])[i])));
+                                      {
+                                        /* Values from constant functions are stored in the pad without any name */
+                                        SV *name_sv = AvARRAY (AvARRAY (padlist)[0])[i];
+
+                                        if (name_sv && SvPOK (name_sv))
+                                          res_pair (form ("in the lexical '%s' in", SvPVX (name_sv)));
+                                        else
+                                          res_pair ("in an unnamed lexical in");
+                                      }
 
                                   --depth;
                                 }
                             }
 
-                          if ((SV*)CvOUTSIDE(sv) == targ)
+                          if (CvCONST (sv) && (SV*)CvXSUBANY (sv).any_ptr == targ)
+                            res_pair ("the constant value of");
+
+                          if (!CvWEAKOUTSIDE (sv) && (SV*)CvOUTSIDE (sv) == targ)
                             res_pair ("the containing scope for");
+
+                          if (sv == targ && CvANON (sv))
+                            if (CvSTART (sv)
+                                && CvSTART (sv)->op_type == OP_NEXTSTATE
+                                && CopLINE ((COP *)CvSTART (sv)))
+                              res_text (form ("the closure created at %s:%d",
+                                              CopFILE ((COP *)CvSTART (sv)) ? CopFILE ((COP *)CvSTART (sv)) : "<unknown>",
+                                              CopLINE ((COP *)CvSTART (sv))));
+                            else
+                              res_text (form ("the closure created somewhere in file %s (PLEASE REPORT!)",
+                                              CvFILE (sv) ? CvFILE (sv) : "<unknown>"));
                         }
 
                         break;

@@ -1,5 +1,5 @@
 NAME
-    Devel::FindRef - where is that reference to my scalar hiding?
+    Devel::FindRef - where is that reference to my variable hiding?
 
 SYNOPSIS
       use Devel::FindRef;
@@ -32,24 +32,23 @@ DESCRIPTION
     The output is as follows (or similar to this, in case I forget to update
     the manpage after some changes):
 
-       SCALAR(0x7bd2d0) is
-          in the global $Test::var.
-          referenced by REF(0x7bd240), which is
-             in the member 'ukukey2' of HASH(0x7bd228), which is
-                referenced by REF(0x81dae8), which is
-                   in the lexical '$local' in CODE(0x81da88), which is
-                      in the global &Test::testsub.
-                referenced by REF(0x81da40), which is
+       SCALAR(0x814ece8) is
+       +- in the global $Test::var.
+       +- referenced by REF(0x814f9e4), which is
+       |     in the lexical '$x' in CODE(0x814ed78), which is
+       |        the containing scope for CODE(0x820c4b0), which is
+       |           in the global &Test::testsub.
+       +- referenced by REF(0x814ed6c), which is
+       |     in the member 'ukukey' of HASH(0x81da20c), which is
+       |        in the global %Test::hash.
+       +- referenced by REF(0x814ec28), which is
+       |     not found anywhere I looked :(
+       +- referenced by REF(0x814eb44), which is
+             in the member 'ukukey2' of HASH(0x814f99c), which is
+             +- referenced by REF(0x820c450), which is
+             |     in the lexical '$local' in CODE(0x820c4b0), which was seen before.
+             +- referenced by REF(0x820c204), which is
                    in the global $Test::hash2.
-          referenced by REF(0x79f3f8), which is
-             in the lexical '$x' in CODE(0x79f518), which is
-                the containing scope for CODE(0x81da88), which is
-                   in the global &Test::testsub.
-          referenced by REF(0x79f2f0), which is
-             not found anywhere I looked :(
-          referenced by REF(0x79f140), which is
-             in the member 'ukukey' of HASH(0x81d698), which is
-                in the global %Test::hash.
 
     It is a bit convoluted to read, but basically it says that the value
     stored in $var can be found:
@@ -92,6 +91,11 @@ FUNCTIONS
 
            # we know that HASH(0x176ff70) exists, so turn it into a hashref:
            my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
+
+ENVIRONMENT VARIABLES
+    You can set the environment variable "PERL_DEVEL_FINDREF_DEPTH" to an
+    integer to override the default depth in "track". If a call explicitly
+    specified a depth it is not overridden.
 
 AUTHOR
     Marc Lehmann <pcg@goof.com>.
