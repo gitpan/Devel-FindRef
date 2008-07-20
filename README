@@ -92,6 +92,11 @@ FUNCTIONS
            # we know that HASH(0x176ff70) exists, so turn it into a hashref:
            my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
 
+    $ref = Devel::FindRef::ref2ptr $reference
+        The opposite of "ptr2ref", above: returns the internal address of
+        the value pointed to by the passed reference. *No checks whatsoever
+        will be done*, so don't use this.
+
 ENVIRONMENT VARIABLES
     You can set the environment variable "PERL_DEVEL_FINDREF_DEPTH" to an
     integer to override the default depth in "track". If a call explicitly

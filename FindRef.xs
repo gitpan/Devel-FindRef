@@ -44,9 +44,16 @@ MODULE = Devel::FindRef		PACKAGE = Devel::FindRef
 PROTOTYPES: ENABLE
 
 SV *
-ptr2ref (IV ptr)
+ptr2ref (UV ptr)
 	CODE:
         RETVAL = newRV_inc (INT2PTR (SV *, ptr));
+	OUTPUT:
+        RETVAL
+
+UV
+ref2ptr (SV *rv)
+	CODE:
+        RETVAL = PTR2UV (SvRV (rv));
 	OUTPUT:
         RETVAL
 
@@ -153,7 +160,11 @@ find_ (SV *target)
 
                                   av_push (excl, newSVuv (PTR2UV (pad))); /* exclude pads themselves from being found */
 
-                                  for (i = AvFILLp (pad) + 1; i--; )
+                                  /* The 0th pad slot is @_ */
+                                  if (AvARRAY (pad)[0] == targ)
+                                    res_pair ("the argument array for");
+
+                                  for (i = AvFILLp (pad) + 1; --i; )
                                     if (AvARRAY (pad)[i] == targ)
                                       {
                                         /* Values from constant functions are stored in the pad without any name */
@@ -205,6 +216,9 @@ find_ (SV *target)
                   SvRMAGICAL_on (sv);
               }
           }
+
+        if (targ == (SV*)PL_main_cv)
+          res_text ("the main body of the program");
 
         EXTEND (SP, 2);
         PUSHs (sv_2mortal (newRV_noinc ((SV *)about)));

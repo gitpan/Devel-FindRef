@@ -1,12 +1,13 @@
 package Devel::FindRef;
 
+no warnings; # I hate warning nazis
 use strict;
 
 use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.3';
+   our $VERSION = '1.31';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -121,7 +122,7 @@ sub track {
             for my $about (@about) {
                $buf .= "$indent" . (@about > 1 ? "+- " : "   ") . $about->[0];
                if (@$about > 1) {
-                  if ($seen{$about->[1]+0}++) {
+                  if ($seen{ref2ptr $about->[1]}++) {
                      $buf .= " $about->[1], which was seen before.\n";
                   } else {
                      $buf .= " $about->[1], which is\n";
@@ -159,7 +160,7 @@ interested in and recurses on the returned references.
 sub find($) {
    my ($about, $excl) = &find_;
    my %excl = map +($_ => undef), @$excl;
-   grep !exists $excl{$_->[1] + 0}, @$about
+   grep !exists $excl{ref2ptr $_->[1]}, @$about
 }
 
 =item $ref = Devel::FindRef::ptr2ref $integer
@@ -171,6 +172,12 @@ call on valid addresses, but extremely dangerous to call on invalid ones.
 
    # we know that HASH(0x176ff70) exists, so turn it into a hashref:
    my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
+
+=item $ref = Devel::FindRef::ref2ptr $reference
+
+The opposite of C<ptr2ref>, above: returns the internal address of the
+value pointed to by the passed reference. I<No checks whatsoever will be
+done>, so don't use this.
 
 =back
 
