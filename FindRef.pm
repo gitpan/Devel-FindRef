@@ -7,7 +7,7 @@ use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.31';
+   our $VERSION = '1.4';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -18,6 +18,8 @@ Devel::FindRef - where is that reference to my variable hiding?
 =head1 SYNOPSIS
 
   use Devel::FindRef;
+
+  print Devel::FindRef::track \$some_variable;
 
 =head1 DESCRIPTION
 
@@ -32,57 +34,84 @@ the variables containing them.
 For example, for this fragment:
 
    package Test;           
+
+   use Devel::FindRef;
+   use Scalar::Util;
                          
    our $var = "hi\n";
-   my $x = \$var;      
-   our %hash = (ukukey => \$var);
-   our $hash2 = {ukukey2 => \$var};
+   my $global_my = \$var;
+   our %global_hash = (ukukey => \$var);
+   our $global_hashref = { ukukey2 => \$var };
                            
    sub testsub {             
-      my $local = $hash2;      
+      my $testsub_local = $global_hashref;
       print Devel::FindRef::track \$var;
    }                             
-                                   
-   testsub;                        
+
+
+   my $closure = sub {
+      my $closure_var = \$_[0];
+      Scalar::Util::weaken (my $weak_ref = \$var);
+      testsub;
+   };
+
+   $closure->($var);
 
 The output is as follows (or similar to this, in case I forget to update
 the manpage after some changes):
 
-   SCALAR(0x814ece8) is
+   SCALAR(0x7cc888) [refcount 6] is
+   +- referenced by REF(0x8abcc8) [refcount 1], which is
+   |  in the lexical '$closure_var' in CODE(0x8abc50) [refcount 4], which is
+   |     +- the closure created at tst:18.
+   |     +- referenced by REF(0x7d3c58) [refcount 1], which is
+   |     |  in the lexical '$closure' in CODE(0x7ae530) [refcount 2], which is
+   |     |     +- the containing scope for CODE(0x8ab430) [refcount 3], which is
+   |     |     |  in the global &Test::testsub.
+   |     |     +- the main body of the program.
+   |     +- in the lexical '&' in CODE(0x7ae530) [refcount 2], which was seen before.
+   +- referenced by REF(0x7cc7c8) [refcount 1], which is
+   |  in the lexical '$global_my' in CODE(0x7ae530) [refcount 2], which was seen before.
    +- in the global $Test::var.
-   +- referenced by REF(0x814f9e4), which is
-   |     in the lexical '$x' in CODE(0x814ed78), which is
-   |        the containing scope for CODE(0x820c4b0), which is
-   |           in the global &Test::testsub.
-   +- referenced by REF(0x814ed6c), which is
-   |     in the member 'ukukey' of HASH(0x81da20c), which is
-   |        in the global %Test::hash.
-   +- referenced by REF(0x814ec28), which is
-   |     not found anywhere I looked :(
-   +- referenced by REF(0x814eb44), which is
-         in the member 'ukukey2' of HASH(0x814f99c), which is
-         +- referenced by REF(0x820c450), which is
-         |     in the lexical '$local' in CODE(0x820c4b0), which was seen before.
-         +- referenced by REF(0x820c204), which is
-               in the global $Test::hash2.
+   +- referenced by REF(0x7cc558) [refcount 1], which is
+   |  in the member 'ukukey2' of HASH(0x7ae140) [refcount 2], which is
+   |     +- referenced by REF(0x8abad0) [refcount 1], which is
+   |     |  in the lexical '$testsub_local' in CODE(0x8ab430) [refcount 3], which was seen before.
+   |     +- referenced by REF(0x8ab4f0) [refcount 1], which is
+   |        in the global $Test::global_hashref.
+   +- referenced by REF(0x7ae518) [refcount 1], which is
+   |  in the member 'ukukey' of HASH(0x7d3bb0) [refcount 1], which is
+   |     in the global %Test::global_hash.
+   +- referenced by REF(0x7ae2f0) [refcount 1], which is
+      a temporary on the stack.
 
 It is a bit convoluted to read, but basically it says that the value
-stored in C<$var> can be found:
+stored in C<$var> is referenced by:
 
 =over 4
 
-=item - in some variable C<$x> whose origin is not known (I frankly have no
-idea why, hints accepted).
+=item - in the lexical C<$closure_var> (0x8abcc8), which is inside an instantiated
+closure, which in turn is used quite a bit.
 
-=item - in the hash element with key C<ukukey> in the hash stored in C<%Test::hash>.
+=item - in the package-level lexical C<$global_my>.
 
-=item - in the global variable named C<$Test::var>.
+=item - in the global package variable named C<$Test::var>.
 
 =item - in the hash element C<ukukey2>, in the hash in the my variable
-C<$local> in the sub C<Test::testsub> and also in the hash referenced by
-C<$Test::hash2>.
+C<$testsub_local> in the sub C<Test::testsub> and also in the hash
+C<$referenced by Test::hash2>.
+
+=item - in the hash element with key C<ukukey> in the hash stored in
+C<%Test::hash>.
+
+=item - some anonymous mortalised reference on the stack (which is caused
+by calling C<track> with the expression C<\$var>, which creates the
+reference).
 
 =back
+
+And all these account for six reference counts.
+
 
 =head1 EXPORTS
 
@@ -104,6 +133,10 @@ This is the function you most often use.
 
 sub find($);
 
+sub _f($) {
+   "$_[0] [refcount " . (_refcnt $_[0]) . "]"
+}
+
 sub track {
    my ($ref, $depth) = @_;
    @_ = ();
@@ -120,12 +153,12 @@ sub track {
          my (@about) = find $$refref;
          if (@about) {
             for my $about (@about) {
-               $buf .= "$indent" . (@about > 1 ? "+- " : "   ") . $about->[0];
+               $buf .= "$indent" . (@about > 1 ? "+- " : "") . $about->[0];
                if (@$about > 1) {
                   if ($seen{ref2ptr $about->[1]}++) {
-                     $buf .= " $about->[1], which was seen before.\n";
+                     $buf .= " " . (_f $about->[1]) . ", which was seen before.\n";
                   } else {
-                     $buf .= " $about->[1], which is\n";
+                     $buf .= " " . (_f $about->[1]) . ", which is\n";
                      $track->(\$about->[1], $depth - 1, $about == $about[-1] ? "$indent   " : "$indent|  ");
                   }
                } else {
@@ -140,7 +173,7 @@ sub track {
       }
    };
 
-   $buf .= "$ref is\n";
+   $buf .= (_f $ref) . " is\n";
    $track->(\$ref, $depth || $ENV{PERL_DEVEL_FINDREF_DEPTH} || 10, "");
    $buf
 }
@@ -191,15 +224,9 @@ specified a depth it is not overridden.
 
 Marc Lehmann <pcg@goof.com>.
 
-=head1 BUGS
-
-Only code values, arrays, hashes, scalars and magic are being looked at.
-
-This is a quick hack only.
-
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007 by Marc Lehmann.
+Copyright (C) 2007, 2008 by Marc Lehmann.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

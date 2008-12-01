@@ -43,22 +43,8 @@ MODULE = Devel::FindRef		PACKAGE = Devel::FindRef
 
 PROTOTYPES: ENABLE
 
-SV *
-ptr2ref (UV ptr)
-	CODE:
-        RETVAL = newRV_inc (INT2PTR (SV *, ptr));
-	OUTPUT:
-        RETVAL
-
-UV
-ref2ptr (SV *rv)
-	CODE:
-        RETVAL = PTR2UV (SvRV (rv));
-	OUTPUT:
-        RETVAL
-
 void
-find_ (SV *target)
+find_ (SV *target_ref)
 	PPCODE:
 {
   	SV *arena, *targ;
@@ -67,10 +53,10 @@ find_ (SV *target)
         AV *about = newAV ();
         AV *excl  = newAV ();
 
-  	if (!SvROK (target))
+  	if (!SvROK (target_ref))
           croak ("find expects a reference to a perl value");
 
-        targ = SvRV (target);
+        targ = SvRV (target_ref);
 
 	for (arena = PL_sv_arenaroot; arena; arena = SvANY (arena))
           {
@@ -116,7 +102,7 @@ find_ (SV *target)
 
                 if (SvROK (sv))
                   {
-                    if (sv != target && SvRV (sv) == targ && !SvWEAKREF (sv))
+                    if (SvRV (sv) == targ && !SvWEAKREF (sv) && sv != target_ref)
                       res_pair ("referenced by");
                   }
                 else
@@ -217,6 +203,11 @@ find_ (SV *target)
               }
           }
 
+        /* look at the mortalise stack of the current coroutine */
+        for (i = 0; i <= PL_tmps_ix; ++i)
+          if (PL_tmps_stack [i] == targ)
+            res_text ("a temporary on the stack");
+
         if (targ == (SV*)PL_main_cv)
           res_text ("the main body of the program");
 
@@ -225,3 +216,23 @@ find_ (SV *target)
         PUSHs (sv_2mortal (newRV_noinc ((SV *)excl)));
 }
 
+SV *
+ptr2ref (UV ptr)
+	CODE:
+        RETVAL = newRV_inc (INT2PTR (SV *, ptr));
+	OUTPUT:
+        RETVAL
+
+UV
+ref2ptr (SV *rv)
+	CODE:
+        RETVAL = PTR2UV (SvRV (rv));
+	OUTPUT:
+        RETVAL
+
+U32
+_refcnt (SV *rv)
+	CODE:
+        RETVAL = SvREFCNT (SvRV (rv));
+	OUTPUT:
+        RETVAL

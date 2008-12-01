@@ -1,5 +1,13 @@
 Revision history for Perl extension Devel::FindRef
 
+TODO: unwrap the save stack to find mortalised scalars (too version dependent).
+TODO: get the stack non-running coroutine?
+
+1.4  Mon Dec  1 14:43:35 CET 2008
+	- show refcount for each scalar.
+        - indicate that scalars are mortalised (but not where).
+        - flatten the results slightly.
+
 1.31 Sun Jul 20 18:38:17 CEST 2008
 	- correctly identify the main program and function call
           argument vectors (patch by Paul LeoNerd Evans).
