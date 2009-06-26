@@ -1,7 +1,15 @@
 Revision history for Perl extension Devel::FindRef
 
 TODO: unwrap the save stack to find mortalised scalars (too version dependent).
-TODO: get the stack non-running coroutine?
+TODO: hash keys containing \x00 do not display properly.
+TODO: get the stack of non-running coroutines?
+
+1.41 Fri Jun 26 16:48:49 CEST 2009
+	- special-case immortal values (\undef etc.)
+	- fix a bug causing some GV references to be dropped.
+        - find and output lvalue target references.
+        - escape hash keys on output.
+        - avoid a crash when passing in a non-reference.
 
 1.4  Mon Dec  1 14:43:35 CET 2008
 	- show refcount for each scalar.

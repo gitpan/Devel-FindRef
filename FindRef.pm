@@ -7,7 +7,7 @@ use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.4';
+   our $VERSION = '1.41';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -90,18 +90,18 @@ stored in C<$var> is referenced by:
 
 =over 4
 
-=item - in the lexical C<$closure_var> (0x8abcc8), which is inside an instantiated
+=item - the lexical C<$closure_var> (0x8abcc8), which is inside an instantiated
 closure, which in turn is used quite a bit.
 
-=item - in the package-level lexical C<$global_my>.
+=item - the package-level lexical C<$global_my>.
 
-=item - in the global package variable named C<$Test::var>.
+=item - the global package variable named C<$Test::var>.
 
-=item - in the hash element C<ukukey2>, in the hash in the my variable
+=item - the hash element C<ukukey2>, in the hash in the my variable
 C<$testsub_local> in the sub C<Test::testsub> and also in the hash
 C<$referenced by Test::hash2>.
 
-=item - in the hash element with key C<ukukey> in the hash stored in
+=item - the hash element with key C<ukukey> in the hash stored in
 C<%Test::hash>.
 
 =item - some anonymous mortalised reference on the stack (which is caused
@@ -153,6 +153,7 @@ sub track {
          my (@about) = find $$refref;
          if (@about) {
             for my $about (@about) {
+               $about->[0] =~ s/([^\x20-\x7e])/sprintf "\\{%02x}", ord $1/ge;
                $buf .= "$indent" . (@about > 1 ? "+- " : "") . $about->[0];
                if (@$about > 1) {
                   if ($seen{ref2ptr $about->[1]}++) {
@@ -174,6 +175,7 @@ sub track {
    };
 
    $buf .= (_f $ref) . " is\n";
+
    $track->(\$ref, $depth || $ENV{PERL_DEVEL_FINDREF_DEPTH} || 10, "");
    $buf
 }
@@ -193,7 +195,7 @@ interested in and recurses on the returned references.
 sub find($) {
    my ($about, $excl) = &find_;
    my %excl = map +($_ => undef), @$excl;
-   grep !exists $excl{ref2ptr $_->[1]}, @$about
+   grep !($#$_ && exists $excl{ref2ptr $_->[1]}), @$about
 }
 
 =item $ref = Devel::FindRef::ptr2ref $integer

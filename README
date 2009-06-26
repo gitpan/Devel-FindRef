@@ -21,13 +21,13 @@ DESCRIPTION
 
        use Devel::FindRef;
        use Scalar::Util;
-                             
-   our $var = "hi\n";
+                         
+       our $var = "hi\n";
        my $global_my = \$var;
        our %global_hash = (ukukey => \$var);
        our $global_hashref = { ukukey2 => \$var };
-                               
-   sub testsub {             
+                           
+       sub testsub {             
           my $testsub_local = $global_hashref;
           print Devel::FindRef::track \$var;
        }                             
@@ -72,15 +72,14 @@ DESCRIPTION
     It is a bit convoluted to read, but basically it says that the value
     stored in $var is referenced by:
 
-    - in the lexical $closure_var (0x8abcc8), which is inside an
-    instantiated closure, which in turn is used quite a bit.
-    - in the package-level lexical $global_my.
-    - in the global package variable named $Test::var.
-    - in the hash element "ukukey2", in the hash in the my variable
+    - the lexical $closure_var (0x8abcc8), which is inside an instantiated
+    closure, which in turn is used quite a bit.
+    - the package-level lexical $global_my.
+    - the global package variable named $Test::var.
+    - the hash element "ukukey2", in the hash in the my variable
     $testsub_local in the sub "Test::testsub" and also in the hash
     "$referenced by Test::hash2".
-    - in the hash element with key "ukukey" in the hash stored in
-    %Test::hash.
+    - the hash element with key "ukukey" in the hash stored in %Test::hash.
     - some anonymous mortalised reference on the stack (which is caused by
     calling "track" with the expression "\$var", which creates the
     reference).
