@@ -4,6 +4,10 @@ TODO: unwrap the save stack to find mortalised scalars (too version dependent).
 TODO: hash keys containing \x00 do not display properly.
 TODO: get the stack of non-running coroutines?
 
+1.42 Wed Jul  1 10:24:42 CEST 2009
+	- allow possible anonymous gv's without crashing in 5.10
+          (untested).
+
 1.41 Fri Jun 26 16:48:49 CEST 2009
 	- special-case immortal values (\undef etc.)
 	- fix a bug causing some GV references to be dropped.

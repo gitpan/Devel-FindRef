@@ -16,6 +16,11 @@
 # define SvPAD_OUR(dummy) 0
 #endif
 
+/* pre-5.10 perls always succeed, with 5.10, we have to check first apparently */
+#ifndef GvNAME_HEK
+# define GvNAME_HEK(sv) 1
+#endif
+
 #define res_pair(text)						\
   do {								\
     AV *av = newAV ();						\
@@ -36,8 +41,8 @@
 #define res_gv(sigil)						\
   res_text (form ("in the global %c%s::%.*s", sigil,		\
                   HvNAME (GvSTASH (sv)),			\
-                  GvNAMELEN (sv),				\
-                  GvNAME (sv) ? GvNAME (sv) : "<anonymous>"))
+                  GvNAME_HEK (sv) ? GvNAMELEN (sv) : 11,	\
+                  GvNAME_HEK (sv) ? GvNAME    (sv) : "<anonymous>"))
 
 MODULE = Devel::FindRef		PACKAGE = Devel::FindRef		
 
