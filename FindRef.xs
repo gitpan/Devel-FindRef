@@ -179,9 +179,9 @@ find_ (SV *target_ref)
                                             SV *name_sv = AvARRAY (AvARRAY (padlist)[0])[i];
 
                                             if (name_sv && SvPOK (name_sv))
-                                              res_pair (form ("in the lexical '%s' in", SvPVX (name_sv)));
+                                              res_pair (form ("the lexical '%s' in", SvPVX (name_sv)));
                                             else
-                                              res_pair ("in an unnamed lexical in");
+                                              res_pair ("an unnamed lexical in");
                                           }
 
                                       --depth;

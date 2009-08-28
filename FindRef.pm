@@ -7,7 +7,7 @@ use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.42';
+   our $VERSION = '1.421';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 

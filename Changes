@@ -4,6 +4,10 @@ TODO: unwrap the save stack to find mortalised scalars (too version dependent).
 TODO: hash keys containing \x00 do not display properly.
 TODO: get the stack of non-running coroutines?
 
+1.421 Fri Aug 28 22:25:57 CEST 2009
+	- tweaked lexical messages a bit (the HASH "is the lexical %var",
+          not "is in the lexical %var".
+
 1.42 Wed Jul  1 10:24:42 CEST 2009
 	- allow possible anonymous gv's without crashing in 5.10
           (untested).
