@@ -39,7 +39,7 @@
   } while (0)
 
 #define res_gv(sigil)						\
-  res_text (form ("in the global %c%s::%.*s", sigil,		\
+  res_text (form ("the global %c%s::%.*s", sigil,		\
                   HvNAME (GvSTASH (sv)),			\
                   GvNAME_HEK (sv) ? GvNAMELEN (sv) : 11,	\
                   GvNAME_HEK (sv) ? GvNAME    (sv) : "<anonymous>"))
@@ -134,7 +134,7 @@ find_ (SV *target_ref)
                             if (AvREAL (sv))
                               for (i = AvFILLp (sv) + 1; i--; )
                                 if (AvARRAY (sv)[i] == targ)
-                                  res_pair (form ("in array element %d of", i));
+                                  res_pair (form ("the array element %d of", i));
 
                             break;
 
@@ -145,7 +145,7 @@ find_ (SV *target_ref)
 
                                 while ((he = hv_iternext ((HV *)sv)))
                                   if (HeVAL (he) == targ)
-                                    res_pair (form ("in the member '%.*s' of", HeKLEN (he), HeKEY (he)));
+                                    res_pair (form ("the member '%.*s' of", HeKLEN (he), HeKEY (he)));
                               }
 
                             break;

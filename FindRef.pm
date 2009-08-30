@@ -1,13 +1,12 @@
 package Devel::FindRef;
 
-no warnings; # I hate warning nazis
-use strict;
+use common::sense;
 
 use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.421';
+   our $VERSION = '1.422';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 

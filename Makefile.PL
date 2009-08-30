@@ -8,6 +8,9 @@ WriteMakefile(
 	            COMPRESS	=> 'gzip -9v',
 	            SUFFIX	=> '.gz',
 	           },
+    PREREQ_PM    => {
+       common::sense    => 0,
+    },
     NAME => "Devel::FindRef",
     VERSION_FROM => "FindRef.pm",
 );
