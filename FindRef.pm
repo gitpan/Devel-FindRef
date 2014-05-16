@@ -6,7 +6,7 @@ use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.422';
+   our $VERSION = '1.43';
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -32,7 +32,7 @@ the variables containing them.
 
 For example, for this fragment:
 
-   package Test;           
+   package Test;
 
    use Devel::FindRef;
    use Scalar::Util;
@@ -42,11 +42,10 @@ For example, for this fragment:
    our %global_hash = (ukukey => \$var);
    our $global_hashref = { ukukey2 => \$var };
                            
-   sub testsub {             
+   sub testsub {
       my $testsub_local = $global_hashref;
       print Devel::FindRef::track \$var;
-   }                             
-
+   }
 
    my $closure = sub {
       my $closure_var = \$_[0];
@@ -61,26 +60,26 @@ the manpage after some changes):
 
    SCALAR(0x7cc888) [refcount 6] is
    +- referenced by REF(0x8abcc8) [refcount 1], which is
-   |  in the lexical '$closure_var' in CODE(0x8abc50) [refcount 4], which is
+   |  the lexical '$closure_var' in CODE(0x8abc50) [refcount 4], which is
    |     +- the closure created at tst:18.
    |     +- referenced by REF(0x7d3c58) [refcount 1], which is
-   |     |  in the lexical '$closure' in CODE(0x7ae530) [refcount 2], which is
+   |     |  the lexical '$closure' in CODE(0x7ae530) [refcount 2], which is
    |     |     +- the containing scope for CODE(0x8ab430) [refcount 3], which is
-   |     |     |  in the global &Test::testsub.
+   |     |     |  the global &Test::testsub.
    |     |     +- the main body of the program.
-   |     +- in the lexical '&' in CODE(0x7ae530) [refcount 2], which was seen before.
+   |     +- the lexical '&' in CODE(0x7ae530) [refcount 2], which was seen before.
    +- referenced by REF(0x7cc7c8) [refcount 1], which is
-   |  in the lexical '$global_my' in CODE(0x7ae530) [refcount 2], which was seen before.
-   +- in the global $Test::var.
+   |  the lexical '$global_my' in CODE(0x7ae530) [refcount 2], which was seen before.
+   +- the global $Test::var.
    +- referenced by REF(0x7cc558) [refcount 1], which is
-   |  in the member 'ukukey2' of HASH(0x7ae140) [refcount 2], which is
+   |  the member 'ukukey2' of HASH(0x7ae140) [refcount 2], which is
    |     +- referenced by REF(0x8abad0) [refcount 1], which is
-   |     |  in the lexical '$testsub_local' in CODE(0x8ab430) [refcount 3], which was seen before.
+   |     |  the lexical '$testsub_local' in CODE(0x8ab430) [refcount 3], which was seen before.
    |     +- referenced by REF(0x8ab4f0) [refcount 1], which is
-   |        in the global $Test::global_hashref.
+   |        the global $Test::global_hashref.
    +- referenced by REF(0x7ae518) [refcount 1], which is
-   |  in the member 'ukukey' of HASH(0x7d3bb0) [refcount 1], which is
-   |     in the global %Test::global_hash.
+   |  the member 'ukukey' of HASH(0x7d3bb0) [refcount 1], which is
+   |     the global %Test::global_hash.
    +- referenced by REF(0x7ae2f0) [refcount 1], which is
       a temporary on the stack.
 
@@ -111,7 +110,6 @@ reference).
 
 And all these account for six reference counts.
 
-
 =head1 EXPORTS
 
 None.
@@ -126,7 +124,8 @@ Track the perl value pointed to by C<$ref> up to a depth of C<$depth> and
 return a descriptive string. C<$ref> can point at any perl value, be it
 anonymous sub, hash, array, scalar etc.
 
-This is the function you most often use.
+This is the function you most likely want to use when tracking down
+references.
 
 =cut
 
@@ -199,19 +198,22 @@ sub find($) {
 
 =item $ref = Devel::FindRef::ptr2ref $integer
 
-Sometimes you know (from debugging output) the address of a perl scalar
-you are interested in (e.g. C<HASH(0x176ff70)>). This function can be used
-to turn the address into a reference to that scalar. It is quite safe to
-call on valid addresses, but extremely dangerous to call on invalid ones.
+Sometimes you know (from debugging output) the address of a perl value you
+are interested in (e.g. C<HASH(0x176ff70)>). This function can be used to
+turn the address into a reference to that value. It is quite safe to call
+on valid addresses, but extremely dangerous to call on invalid ones.  I<No
+checks whatsoever will be done>, so don't use this unless you really know
+the value is the address of a valid perl value.
 
    # we know that HASH(0x176ff70) exists, so turn it into a hashref:
    my $ref_to_hash = Devel::FindRef::ptr2ref 0x176ff70;
 
-=item $ref = Devel::FindRef::ref2ptr $reference
+=item $ptr = Devel::FindRef::ref2ptr $reference
 
 The opposite of C<ptr2ref>, above: returns the internal address of the
-value pointed to by the passed reference. I<No checks whatsoever will be
-done>, so don't use this.
+value pointed to by the passed reference. This function is safe to call on
+anything, and returns the same value taht a normal reference would if used
+in a numeric context.
 
 =back
 
@@ -219,7 +221,7 @@ done>, so don't use this.
 
 You can set the environment variable C<PERL_DEVEL_FINDREF_DEPTH> to an
 integer to override the default depth in C<track>. If a call explicitly
-specified a depth it is not overridden.
+specifies a depth, it is not overridden.
 
 =head1 AUTHOR
 
@@ -227,7 +229,7 @@ Marc Lehmann <pcg@goof.com>.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2007, 2008 by Marc Lehmann.
+Copyright (C) 2007, 2008, 2009, 2013 by Marc Lehmann.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.8.8 or,

@@ -21,6 +21,12 @@
 # define GvNAME_HEK(sv) 1
 #endif
 
+#ifndef PadARRAY
+# define PadARRAY(pad)    AvARRAY (pad)
+# define PadlistARRAY(pl) ((PAD **)AvARRAY (pl))
+#endif
+
+
 #define res_pair(text)						\
   do {								\
     AV *av = newAV ();						\
@@ -145,38 +151,39 @@ find_ (SV *target_ref)
 
                                 while ((he = hv_iternext ((HV *)sv)))
                                   if (HeVAL (he) == targ)
-                                    res_pair (form ("the member '%.*s' of", HeKLEN (he), HeKEY (he)));
+                                    res_pair (form ("the hash member '%.*s' of", HeKLEN (he), HeKEY (he)));
                               }
 
                             break;
 
                           case SVt_PVCV:
                             {
-                              int depth = CvDEPTH (sv);
+                              PADLIST *padlist = CvPADLIST (sv);
 
-                              /* Anonymous subs have a padlist but zero depth */
-                              if (CvANON (sv) && !depth && CvPADLIST (sv))
-                                depth = 1;
-
-                              if (depth)
+                              if (padlist)
                                 {
-                                  AV *padlist = CvPADLIST (sv);
+                                  int depth = CvDEPTH (sv);
+
+                                /* Anonymous subs have a padlist but zero depth */
+                                /* some hacks switch CvANON off, so we just blindly assume a minimum of 1 */
+                                  if (!depth)
+                                    depth = 1;
 
                                   while (depth)
                                     {
-                                      AV *pad = (AV *)AvARRAY (padlist)[depth];
+                                      PAD *pad = PadlistARRAY (padlist)[depth];
 
                                       av_push (excl, newSVuv (PTR2UV (pad))); /* exclude pads themselves from being found */
 
                                       /* The 0th pad slot is @_ */
-                                      if (AvARRAY (pad)[0] == targ)
+                                      if (PadARRAY (pad)[0] == targ)
                                         res_pair ("the argument array for");
 
                                       for (i = AvFILLp (pad) + 1; --i; )
                                         if (AvARRAY (pad)[i] == targ)
                                           {
                                             /* Values from constant functions are stored in the pad without any name */
-                                            SV *name_sv = AvARRAY (AvARRAY (padlist)[0])[i];
+                                            SV *name_sv = PadARRAY (PadlistARRAY (padlist)[0])[i];
 
                                             if (name_sv && SvPOK (name_sv))
                                               res_pair (form ("the lexical '%s' in", SvPVX (name_sv)));
@@ -228,7 +235,7 @@ find_ (SV *target_ref)
 
                                     if (mg && mg->mg_obj)
                                       res_pair (form ("the target for the lvalue hash element '%.*s',",
-                                                      SvCUR (mg->mg_obj), SvPV_nolen (mg->mg_obj)));
+                                                      (int)SvCUR (mg->mg_obj), SvPV_nolen (mg->mg_obj)));
                                     else
                                       res_pair (form ("the target for the lvalue array element #%d,", LvTARGOFF (sv)));
                                   }
