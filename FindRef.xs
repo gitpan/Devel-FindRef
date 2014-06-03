@@ -109,7 +109,7 @@ find_ (SV *target_ref)
                             /* maybe some placeholder for our variables for eval? */
                             /* it doesn't seem to reference anything, so we should be able to ignore it */
                           }
-                        else
+                        else if (SvMAGICAL (sv)) /* name-pads use SvMAGIC for other purposes */
                           {
                             MAGIC *mg = SvMAGIC (sv);
 

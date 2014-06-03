@@ -4,10 +4,13 @@ TODO: unwrap the save stack to find mortalised scalars (too version dependent).
 TODO: hash keys containing \x00 do not display properly.
 TODO: get the stack of non-running coroutines?
 
+1.44 Tue Jun  3 20:40:13 CEST 2014
+	- port to 5.20 (analyzed by Dave Mitchell).
+
 1.43  Fri May 16 09:43:01 CEST 2014
 	- port to 5.18.
         - hopefully better treat anon subs that have been un-anonized
-          without adjusting the pad by Sub::Name (I forgot who send
+          without adjusting the pad by Sub::Name (I forgot who sent
           the testcase).
 	- fix ref2ptr/ptr2ref documentation.
 

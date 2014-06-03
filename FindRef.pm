@@ -6,7 +6,7 @@ use XSLoader;
 use Scalar::Util;
 
 BEGIN {
-   our $VERSION = '1.43';
+   our $VERSION = 1.44;
    XSLoader::load __PACKAGE__, $VERSION;
 }
 
@@ -212,7 +212,7 @@ the value is the address of a valid perl value.
 
 The opposite of C<ptr2ref>, above: returns the internal address of the
 value pointed to by the passed reference. This function is safe to call on
-anything, and returns the same value taht a normal reference would if used
+anything, and returns the same value that a normal reference would if used
 in a numeric context.
 
 =back
